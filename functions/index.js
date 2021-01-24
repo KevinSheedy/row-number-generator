@@ -54,24 +54,13 @@ exports.incrementCounter = functions.https.onRequest(async (req, res) => {
     .limit(1)
     .get();
 
-  if (queryResult.empty) {
-    console.log("No matching documents.");
-    return;
-  } else {
-    console.log("Number of results:", queryResult.size);
+  let nextCounterValue = 0;
+
+  if (!queryResult.empty) {
+    nextCounterValue = queryResult.docs[0].data().counterValue + 1;
   }
 
-  const highestRecord = queryResult.docs[0].data();
-  console.log({ highestRecord });
-  console.log(highestRecord.counterKey);
-
-  queryResult.forEach((doc) => {
-    console.log(doc.id, doc.data());
-  });
-  const counterValue = Number.isInteger(highestRecord?.counterValue)
-    ? highestRecord.counterValue + 1
-    : 0;
-  const record = { counterKey, counterValue };
+  const record = { counterKey, counterValue: nextCounterValue };
   await countersRef.add(record);
   res.json(record);
 });
