@@ -47,7 +47,31 @@ exports.makeUppercase = functions.firestore
 
 exports.incrementCounter = functions.https.onRequest(async (req, res) => {
   const { counterKey } = req.query;
-  const record = { counterKey, counterValue: 0 };
-  await admin.firestore().collection("counters").add(record);
+  const countersRef = admin.firestore().collection("counters");
+  const queryResult = await countersRef
+    .where("counterKey", "==", counterKey)
+    .orderBy("counterValue", "desc")
+    .limit(1)
+    .get();
+
+  if (queryResult.empty) {
+    console.log("No matching documents.");
+    return;
+  } else {
+    console.log("Number of results:", queryResult.size);
+  }
+
+  const highestRecord = queryResult.docs[0].data();
+  console.log({ highestRecord });
+  console.log(highestRecord.counterKey);
+
+  queryResult.forEach((doc) => {
+    console.log(doc.id, doc.data());
+  });
+  const counterValue = Number.isInteger(highestRecord?.counterValue)
+    ? highestRecord.counterValue + 1
+    : 0;
+  const record = { counterKey, counterValue };
+  await countersRef.add(record);
   res.json(record);
 });
