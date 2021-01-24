@@ -44,3 +44,10 @@ exports.makeUppercase = functions.firestore
     // Setting an 'uppercase' field in Firestore document returns a Promise.
     return snap.ref.set({ uppercase }, { merge: true });
   });
+
+exports.incrementCounter = functions.https.onRequest(async (req, res) => {
+  const { counterKey } = req.query;
+  const record = { counterKey, counterValue: 0 };
+  await admin.firestore().collection("counters").add(record);
+  res.json(record);
+});
